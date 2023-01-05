@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  apache_loren:
+    image: apache-loren_ipsun
+    container_name: site_loren
+    hostname: server_www_loren
+    ports:
+      - "8000:80"
