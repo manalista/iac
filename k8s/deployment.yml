@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-dados
+spec:
+  resources:
+    requests:
+      storage: 100Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: data-storage
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: manalista/meu-app-banco:1.0
+        resources:
+          limits:
+            memory: "1024Mi"
+            cpu: "500m"
+        args:
+          - "--ignore-db-dir=lost+found"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-dados 
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-dados
+        persistentVolumeClaim: 
+          claimName: mysql-dados 
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  labels:
+    app: server 
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: manalista/meu-app-server:1.0
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
